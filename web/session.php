@@ -10,11 +10,12 @@ require_once ("./get_sessions.php");
 require_once ("./get_columns.php");
 require_once ("./plot.php");
 
-$_SESSION['recent_session_id'] = strval(max($sids));
+
+$_SESSION['recent_session_id'] = $sids[count($sids)-1];
 
 // Connect to Database
-$con = mysql_connect($db_host, $db_user, $db_pass) or die(mysql_error());
-mysql_select_db($db_name, $con) or die(mysql_error());
+$con = mysqli_connect($db_host, $db_user, $db_pass) or die(mysqli_error($con));
+mysqli_select_db($con, $db_name) or die(mysqli_error($con));
 
 if (isset($_POST["id"])) {
     $session_id = preg_replace('/\D/', '', $_POST['id']);
@@ -34,13 +35,10 @@ if (isset($session_id)) {
     }
 
     // Get GPS data for session
-    $sessionqry = mysql_query("SELECT kff1006, kff1005
-                          FROM $db_table
-                          WHERE session=$session_id
-                          ORDER BY time DESC", $con) or die(mysql_error());
+    $sessionqry = mysqli_query($con, "SELECT kff1006, kff1005 FROM $db_table WHERE session='".$session_id."' ORDER BY time DESC") or die(mysqli_error($con));
 
     $geolocs = array();
-    while($geo = mysql_fetch_array($sessionqry)) {
+    while($geo = mysqli_fetch_array($sessionqry)) {
         if (($geo["0"] != 0) && ($geo["1"] != 0)) {
             $geolocs[] = array("lat" => $geo["0"], "lon" => $geo["1"]);
         }
@@ -56,8 +54,8 @@ if (isset($session_id)) {
     // Don't need to set zoom manually
     $setZoomManually = 0;
 
-    mysql_free_result($sessionqry);
-    mysql_close($con);
+    mysqli_free_result($sessionqry);
+    mysqli_close($con);
 }
 else {
     // Define these so we don't get an error on empty page loads. Instead it
@@ -106,98 +104,7 @@ else {
         <script language="javascript" type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script language="javascript" type="text/javascript" src="static/js/jquery.peity.min.js"></script>
         <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
-        <script language="javascript" type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
-
-        <script language="javascript" type="text/javascript">
-          function initialize() {
-            var mapDiv = document.getElementById('map-canvas');
-
-            var map = new google.maps.Map(mapDiv, {
-              mapTypeId: google.maps.MapTypeId.ROADMAP,
-              mapTypeControl: true,
-              mapTypeControlOptions: {
-                  style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-                  poistion: google.maps.ControlPosition.TOP_RIGHT,
-                  mapTypeIds: [google.maps.MapTypeId.ROADMAP,
-                    google.maps.MapTypeId.TERRAIN,
-                    google.maps.MapTypeId.HYBRID,
-                    google.maps.MapTypeId.SATELLITE]
-              },
-              navigationControl: true,
-              navigationControlOptions: {
-                  style: google.maps.NavigationControlStyle.ZOOM_PAN
-              },
-              scaleControl: true,
-              disableDoubleClickZoom: false,
-              draggable: true,
-              streetViewControl: true,
-              draggableCursor: 'move'
-            });
-
-            // The potentially large array of LatLng objects for the roadmap
-            var path = [<?php echo $imapdata; ?>];
-
-            // Create a boundary using the path to automatically configure
-            // the default centering location and zoom.
-            var bounds = new google.maps.LatLngBounds();
-            for (i = 0; i < path.length; i++) {
-              bounds.extend(path[i]);
-            }
-            map.fitBounds(bounds);
-
-            // If required/desired, set zoom manually now that bounds have been set
-            <?php if ($setZoomManually === 1) { ?>
-              zoomChange = google.maps.event.addListenerOnce(map, 'bounds_changed',
-                        function(event) {
-                          if (this.getZoom()){
-                            this.setZoom(16);
-                          }
-                        });
-
-              setTimeout(function(){
-                google.maps.event.removeListener(zoomChange)
-              }, 1000);
-
-              var contentString = '<div>'+
-                  '<div class="alert alert-info">'+
-                  '  <p class="lead" align="center">'+
-                  "  You're seeing this window because "+
-                  '<br>'+
-                  "you haven't selected a session. "+
-                  '<br><br>'+
-                  " Select one from the dropdown menu."+
-                  '  </p>'+
-                  '</div>'+
-                  '</div>';
-
-              var infowindow = new google.maps.InfoWindow({
-                  content: contentString
-              });
-
-              var marker = new google.maps.Marker({
-                  position: <?php echo $imapdata; ?>,
-                  map: map,
-                  title: 'Area 51'
-              });
-
-              setTimeout(function() {
-                infowindow.open(map, marker)
-              }, 2000);
-
-            <?php } ?>
-
-            var line = new google.maps.Polyline({
-              path: path,
-              strokeColor: '#800000',
-              strokeOpacity: 0.75,
-              strokeWeight: 4
-            });
-            line.setMap(map);
-          };
-
-          google.maps.event.addDomListener(window, 'load', initialize);
-        </script>
-
+       
         <?php if ($setZoomManually === 0) { ?>
 
         <!-- Flot Javascript files -->
@@ -284,10 +191,8 @@ else {
                 </div>
                 </div>
             </div>
-            <div id="map-container" class="col-md-7 col-xs-12">
-                <div id="map-canvas"></div>
-            </div>
-            <div id="right-container" class="col-md-5 col-xs-12">
+        
+            <div id="right-container" class="col-md-12 col-xs-12">
                 <div id="right-cell">
 
                     <h4>Select Session</h4>

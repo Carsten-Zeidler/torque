@@ -3,29 +3,34 @@ require_once("./creds.php");
 require_once("./parse_functions.php");
 
 // Connect to Database
-mysql_connect($db_host, $db_user, $db_pass) or die(mysql_error());
-mysql_select_db($db_name) or die(mysql_error());
+$con = mysqli_connect($db_host, $db_user, $db_pass) or die(mysqli_error());
+mysqli_select_db($con, $db_name) or die(mysqli_error());
+
+$v1_measurand = null;
+$v2_measurand = null;
+$spark1 = array();
+$spark2 = array();
 
 // Grab the session number
 if (isset($_GET["id"]) and in_array($_GET["id"], $sids)) {
-    $session_id = mysql_real_escape_string($_GET['id']);
+    $session_id = mysqli_real_escape_string($con, $_GET['id']);
 
     // Get the torque key->val mappings
     $js = CSVtoJSON("./data/torque_keys.csv");
     $jsarr = json_decode($js, TRUE);
 
     // The columns to plot -- if no PIDs are specified I default to intake temp and OBD speed
-    if (isset($_GET["s1"])) {
-        $v1 = mysql_real_escape_string($_GET['s1']);
+    if (isset($_GET["s1"]) && $_GET["s1"] != "Plot!" && $_GET["s1"] != "") {
+        $v1 = mysqli_real_escape_string($con, $_GET['s1']);
     }
     else {
         $v1 = "kd"; // OBD Speed
     }
-    if (isset($_GET["s2"])) {
-        $v2 = mysql_real_escape_string($_GET['s2']);
+    if (isset($_GET["s2"]) && $_GET["s2"] != "Plot!" && $_GET["s2"] != "") {
+        $v2 = mysqli_real_escape_string($con, $_GET['s2']);
     }
     else {
-        $v2 = "kf";   // Intake Air Temp
+        $v2 = "k4";   // Intake Air Temp
     }
 
     // Grab the label for each PID to be used in the plot
@@ -33,10 +38,7 @@ if (isset($_GET["id"]) and in_array($_GET["id"], $sids)) {
     $v2_label = '"'.$jsarr[$v2].'"';
 
     // Get data for session
-    $sessionqry = mysql_query("SELECT time,$v1,$v2
-                          FROM $db_table
-                          WHERE session=$session_id
-                          ORDER BY time DESC;") or die(mysql_error());
+    $sessionqry = mysqli_query($con, "SELECT time,$v1,$v2 FROM $db_table WHERE session='".$session_id."' ORDER BY time DESC;") or die(mysqli_error($con));
 
     //Speed conversion
     if (!$source_is_miles && $use_miles)
@@ -88,7 +90,7 @@ if (isset($_GET["id"]) and in_array($_GET["id"], $sids)) {
 
     // Convert data units
     // TODO: Use the userDefault fields to do these conversions dynamically
-    while($row = mysql_fetch_assoc($sessionqry)) {
+    while($row = mysqli_fetch_assoc($sessionqry)) {
         // data column #1
         if (substri_count($jsarr[$v1], "Speed") > 0) {
             $x = intval($row[$v1]) * $speed_factor;
@@ -127,10 +129,10 @@ if (isset($_GET["id"]) and in_array($_GET["id"], $sids)) {
 
     $sparkdata1 = implode(",", array_reverse($spark1));
     $sparkdata2 = implode(",", array_reverse($spark2));
-    $max1 = round(max($spark1), 1);
-    $max2 = round(max($spark2), 1);
-    $min1 = round(min($spark1), 1);
-    $min2 = round(min($spark2), 1);
+    $max1 = round(max(0, $spark1), 1);
+    $max2 = round(max(0, $spark2), 1);
+    $min1 = round(min($spark1, $max1), 1);
+    $min2 = round(min($spark2, $max2), 1);
     $avg1 = round(average($spark1), 1);
     $avg2 = round(average($spark2), 1);
     $pcnt25data1 = round(calc_percentile($spark1, 25), 1);

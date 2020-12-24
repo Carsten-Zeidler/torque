@@ -2,14 +2,14 @@
 
 // MySQL Credentials
 $db_host = 'localhost';
-$db_user = '';     // Enter your MySQL username
-$db_pass = '';     // Enter your MySQL password
+$db_user = '#######';     // Enter your MySQL username
+$db_pass = '#######';     // Enter your MySQL password
 $db_name = 'torque';
 $db_table = 'raw_logs';
 
 // User credentials for Browser login
-$auth_user = '';    //Sample: 'torque'
-$auth_pass = '';    //Sample: 'open'
+$auth_user = 'view';    //Sample: 'torque'
+$auth_pass = 'view';    //Sample: 'open'
 
 //If you want to restrict access to upload_data.php, 
 // either enter your torque ID as shown in the torque app, 
@@ -25,7 +25,16 @@ $use_fahrenheit = false;
 $source_is_miles = false;
 $use_miles = false;
 
-$hide_empty_variables = true;
-$show_session_length = true;
+$hide_empty_variables = false;
+$show_session_length = false;
 
+
+// DEBUG 
+/*
+error_reporting(-1);
+ 
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 'ON');
+*/
 ?>
+

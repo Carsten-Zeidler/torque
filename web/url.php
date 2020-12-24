@@ -1,14 +1,18 @@
 <?php
+//include("creds.php");
 session_set_cookie_params(0,dirname($_SERVER['SCRIPT_NAME']));
 session_start();
 
 // Get the Full URL to the session.php file
-$thisfile = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+$thisfile = "https://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+
 $parts = strtok("url.php", $thisfile);
+$parts = array("https://".$_SERVER["SERVER_NAME"]."/");
+
 if (isset($_GET["makechart"])) {
-    $baselink = $parts["0"]."session.php";
+    $baselink = $parts[0]."session.php";
     if (isset($_GET["seshid"])) {
-        $seshid = strval(mysql_escape_string($_GET["seshid"]));
+        $seshid = strval($_GET["seshid"]);
         if (isset($_POST["plotdata"])) {
             $plotdataarray = $_POST["plotdata"];
             $s1data = $plotdataarray[0];
@@ -26,9 +30,9 @@ if (isset($_GET["makechart"])) {
     }
 }
 else {
-    $baselink = $parts["0"]."session.php";
+    $baselink = $parts[0]."session.php";
     if (isset($_POST["seshidtag"])) {
-        $seshid = strval(mysql_escape_string($_POST["seshidtag"]));
+        $seshid = strval($_POST["seshidtag"]);
         $outurl = $baselink."?id=".$seshid;
     }
     else {
