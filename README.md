@@ -25,7 +25,7 @@ If in doubt, I'd recommend using Ubuntu 12.04 LTS.
 First clone the repo:
 
 ```bash
-git clone https://github.com/econpy/torque
+git clone https://github.com/Carsten-Zeidler/torque
 cd torque
 ```
 
